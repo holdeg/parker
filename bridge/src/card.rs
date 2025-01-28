@@ -1,4 +1,7 @@
-use std::fmt::{Display, Write};
+use std::{
+    fmt::{Display, Write},
+    str::FromStr,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Suit {
@@ -20,7 +23,7 @@ impl From<Suit> for char {
 }
 
 impl TryFrom<char> for Suit {
-    type Error = ();
+    type Error = String;
 
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value {
@@ -28,7 +31,7 @@ impl TryFrom<char> for Suit {
             'H' => Ok(Suit::Hearts),
             'D' => Ok(Suit::Diamonds),
             'C' => Ok(Suit::Clubs),
-            _ => Err(()),
+            _ => Err(format!("provided char {} is not a suit", value)),
         }
     }
 }
@@ -102,7 +105,7 @@ impl From<Rank> for char {
 }
 
 impl TryFrom<char> for Rank {
-    type Error = ();
+    type Error = String;
 
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value {
@@ -119,7 +122,7 @@ impl TryFrom<char> for Rank {
             'Q' => Ok(Rank::Queen),
             'K' => Ok(Rank::King),
             'A' => Ok(Rank::Ace),
-            _ => Err(()),
+            _ => Err(format!("provided char {} is not a rank", value)),
         }
     }
 }
@@ -156,6 +159,24 @@ pub struct Card {
 impl Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!("{}{}", self.suit, self.rank))
+    }
+}
+
+impl FromStr for Card {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut char_iter = s.chars();
+        let rank = char_iter.next().ok_or("couldn't determine rank char")?;
+        let suit = char_iter.next().ok_or("couldn't determine suit char")?;
+        if char_iter.next().is_some() {
+            Err("too many chars provided")?;
+        }
+
+        Ok(Self {
+            suit: suit.try_into()?,
+            rank: rank.try_into()?,
+        })
     }
 }
 
