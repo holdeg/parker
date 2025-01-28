@@ -150,7 +150,7 @@ impl TryFrom<u8> for Rank {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Card {
     pub suit: Suit,
     pub rank: Rank,
@@ -199,5 +199,36 @@ mod test {
         assert_eq!(2, Rank::Two as isize);
         assert_eq!(14, Rank::Ace as usize);
         assert_eq!(10, Rank::Ten as u64);
+    }
+
+    #[test]
+    fn card_parse() {
+        assert_eq!(
+            Ok(Card {
+                suit: Suit::Hearts,
+                rank: Rank::Ten,
+            }),
+            "TH".parse()
+        );
+        assert_eq!(
+            Ok(Card {
+                suit: Suit::Clubs,
+                rank: Rank::Two,
+            }),
+            "2C".parse()
+        );
+        assert_eq!(
+            Ok(Card {
+                suit: Suit::Diamonds,
+                rank: Rank::Queen,
+            }),
+            "QD".parse()
+        );
+        assert!("Kx".parse::<Card>().is_err());
+        assert!("#H".parse::<Card>().is_err());
+        assert!("1S".parse::<Card>().is_err());
+        assert!("".parse::<Card>().is_err());
+        assert!("3C7H".parse::<Card>().is_err());
+        assert!("6".parse::<Card>().is_err());
     }
 }
