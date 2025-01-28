@@ -3,4 +3,8 @@ name = "parker"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = ["bridge"]
+
 [dependencies]
+bridge = { path = "bridge" }
