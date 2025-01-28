@@ -1,11 +1,11 @@
 use std::fmt::{Display, Write};
 
-#[derive(Debug, Clone, Copy)]
-enum Suit {
-    Spades,
-    Hearts,
-    Diamonds,
-    Clubs,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Suit {
+    Spades = 3,
+    Hearts = 2,
+    Diamonds = 1,
+    Clubs = 0,
 }
 
 impl From<Suit> for char {
@@ -44,9 +44,9 @@ impl Display for Suit {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-enum Rank {
-    Two,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Rank {
+    Two = 2,
     Three,
     Four,
     Five,
@@ -124,26 +124,6 @@ impl TryFrom<char> for Rank {
     }
 }
 
-impl From<Rank> for u8 {
-    fn from(value: Rank) -> Self {
-        match value {
-            Rank::Two => 2,
-            Rank::Three => 3,
-            Rank::Four => 4,
-            Rank::Five => 5,
-            Rank::Six => 6,
-            Rank::Seven => 7,
-            Rank::Eight => 8,
-            Rank::Nine => 9,
-            Rank::Ten => 10,
-            Rank::Jack => 11,
-            Rank::Queen => 12,
-            Rank::King => 13,
-            Rank::Ace => 14,
-        }
-    }
-}
-
 impl TryFrom<u8> for Rank {
     type Error = ();
 
@@ -164,5 +144,39 @@ impl TryFrom<u8> for Rank {
             14 => Ok(Rank::Ace),
             _ => Err(()),
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Card {
+    pub suit: Suit,
+    pub rank: Rank,
+}
+
+impl Display for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{}{}", self.suit, self.rank))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn rank_ordering() {
+        assert!(Rank::Two < Rank::Five);
+        assert!(Rank::Ace > Rank::King);
+        assert!(Rank::Four <= Rank::Ten);
+        assert!(Rank::Jack >= Rank::Jack);
+        assert!(Rank::Three != Rank::Queen);
+        assert!(Rank::Seven == Rank::Seven);
+    }
+
+    #[test]
+    fn rank_casting() {
+        assert_eq!(2, Rank::Two as isize);
+        assert_eq!(14, Rank::Ace as usize);
+        assert_eq!(10, Rank::Ten as u64);
     }
 }
