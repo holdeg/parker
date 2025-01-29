@@ -64,6 +64,18 @@ pub enum Rank {
     Ace,
 }
 
+impl Rank {
+    pub fn high_card_points(&self) -> u8 {
+        match self {
+            Rank::Jack => 1,
+            Rank::Queen => 2,
+            Rank::King => 3,
+            Rank::Ace => 4,
+            _ => 0,
+        }
+    }
+}
+
 impl Display for Rank {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {

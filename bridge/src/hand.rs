@@ -64,6 +64,27 @@ impl Display for Hand {
 
 impl Hand {
     pub fn len(&self) -> usize {
-        self.spades.len() + self.hearts.len() + self.diamonds.len() + self.clubs.len()
+        self.distribution().iter().sum()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Card> {
+        self.spades
+            .iter()
+            .chain(self.hearts.iter())
+            .chain(self.diamonds.iter())
+            .chain(self.clubs.iter())
+    }
+
+    pub fn hcp(&self) -> u8 {
+        self.iter().map(|card| card.rank.high_card_points()).sum()
+    }
+
+    pub fn distribution(&self) -> [usize; 4] {
+        [
+            self.spades.len(),
+            self.hearts.len(),
+            self.diamonds.len(),
+            self.clubs.len(),
+        ]
     }
 }

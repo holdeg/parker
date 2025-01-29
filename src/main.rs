@@ -16,5 +16,11 @@ fn main() {
         .collect();
 
     let hand: Hand = dbg!(cards.into());
-    println!("Hand: {}\nLength: {}", hand, hand.len());
+    println!(
+        "Hand: {}\nLength: {}\nDistribution: {:?}\nHCP: {}",
+        hand,
+        hand.len(),
+        hand.distribution(),
+        hand.hcp()
+    );
 }
