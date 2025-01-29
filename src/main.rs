@@ -1,6 +1,6 @@
 use bridge::{
     card::{Card, Rank, Suit},
-    hand::Hand,
+    deck::Deck,
 };
 
 fn main() {
@@ -10,17 +10,21 @@ fn main() {
     });
     println!("{}\n", ace_of_hearts);
 
-    let cards: Vec<Card> = vec!["AH", "2S", "4C", "8C", "TH", "5S"]
-        .iter()
-        .filter_map(|card_string| card_string.parse().ok())
-        .collect();
+    // let cards: Vec<Card> = vec!["AH", "2S", "4C", "8C", "TH", "5S"]
+    //     .iter()
+    //     .filter_map(|card_string| card_string.parse().ok())
+    //     .collect();
 
-    let hand: Hand = dbg!(cards.into());
+    let mut deck = Deck::default();
+    deck.shuffle();
+
+    let hands = deck.deal();
+    let north = &hands[0];
     println!(
         "Hand: {}\nLength: {}\nDistribution: {:?}\nHCP: {}",
-        hand,
-        hand.len(),
-        hand.distribution(),
-        hand.hcp()
+        north,
+        north.len(),
+        north.distribution(),
+        north.hcp()
     );
 }
