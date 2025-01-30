@@ -8,5 +8,6 @@ name = "bridge"
 path = "src/lib.rs"
 
 [dependencies]
+deranged = "0.3.11"
 rand = "0.9.0"
 strum = { version = "0.26.3", features = ["derive"] }
