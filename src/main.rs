@@ -14,11 +14,6 @@ fn main() {
     });
     println!("{}\n", ace_of_hearts);
 
-    // let cards: Vec<Card> = vec!["AH", "2S", "4C", "8C", "TH", "5S"]
-    //     .iter()
-    //     .filter_map(|card_string| card_string.parse().ok())
-    //     .collect();
-
     let mut deck = Deck::default();
     deck.shuffle();
 
@@ -38,6 +33,9 @@ fn main() {
 
         let mut buffer = String::new();
         io::stdin().read_line(&mut buffer).unwrap();
+        if buffer.is_empty() {
+            break;
+        }
 
         buffer = buffer.trim().to_string();
         let parsed_bid: Result<AuctionBid, ParseError> = buffer.parse();
@@ -47,4 +45,6 @@ fn main() {
         };
         println!("'{}' gives {}", buffer, output)
     }
+
+    println!("All done.")
 }

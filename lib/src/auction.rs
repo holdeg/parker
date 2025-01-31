@@ -1,4 +1,5 @@
 use std::{
+    cmp::max,
     fmt::Display,
     ops::{Add, Sub},
     str::FromStr,
@@ -155,6 +156,54 @@ impl Sub<Seat> for Seat {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Status {
+    Undoubled,
+    Doubled,
+    Redoubled,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Contract {
+    pub bid: Bid,
+    pub status: Status,
+}
+
+impl From<Bid> for Contract {
+    fn from(value: Bid) -> Self {
+        Self {
+            bid: value,
+            status: Status::Undoubled,
+        }
+    }
+}
+
+impl FromStr for Contract {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut massaged = s.to_lowercase();
+        massaged.retain(|c| !c.is_whitespace());
+
+        let mut chars = massaged.chars().rev().peekable();
+        let mut status = Status::Undoubled;
+
+        if *chars.peek().ok_or(ParseError::TooShort)? == 'x' {
+            status = Status::Doubled;
+            chars.next();
+            if *chars.peek().ok_or(ParseError::TooShort)? == 'x' {
+                status = Status::Redoubled;
+                chars.next();
+            }
+        }
+
+        Ok(Self {
+            bid: chars.rev().collect::<String>().parse()?,
+            status,
+        })
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Auction {
     dealer: Seat,
@@ -189,6 +238,36 @@ impl Auction {
             .step_by(4)
             .collect()
     }
+
+    pub fn closed(&self) -> bool {
+        self.sequence.len() >= 4
+            && self
+                .sequence
+                .iter()
+                .rev()
+                .take(3)
+                .all(|bid| *bid == AuctionBid::Pass)
+    }
+
+    pub fn contract(&self) -> Option<Contract> {
+        let mut status = Status::Undoubled;
+        let mut contract_bid = None;
+        for auction_bid in self.sequence.iter().rev() {
+            match auction_bid {
+                AuctionBid::Pass => continue,
+                AuctionBid::Double => status = max(status, Status::Doubled),
+                AuctionBid::Redouble => status = max(status, Status::Redoubled),
+                AuctionBid::Bid(bid) => {
+                    contract_bid = Some(*bid);
+                    break;
+                }
+            }
+        }
+        Some(Contract {
+            bid: contract_bid?,
+            status,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -222,6 +301,40 @@ mod test {
             "ant".parse::<AuctionBid>()
         );
         assert_eq!(Err(ParseError::TooShort), "".parse::<AuctionBid>());
+    }
+
+    //TODO expand this into proper UTs
+    #[test]
+    fn parse_contract() {
+        assert_eq!(
+            Ok(Contract {
+                bid: "1s".parse().unwrap(),
+                status: Status::Redoubled
+            }),
+            "1sxx".parse()
+        );
+    }
+
+    fn game_with_small_interference() -> Auction {
+        let mut auction = Auction::new(Seat::South);
+        auction.sequence.append(&mut vec![AuctionBid::Pass; 2]);
+        auction.sequence.push("1D".parse().unwrap());
+        auction.sequence.push("1H".parse().unwrap());
+        auction.sequence.push("1NT".parse().unwrap());
+        auction.sequence.push(AuctionBid::Pass);
+        auction.sequence.push("2NT".parse().unwrap());
+        auction.sequence.push(AuctionBid::Pass);
+        auction.sequence.push("3NT".parse().unwrap());
+        auction.sequence.append(&mut vec![AuctionBid::Pass; 3]);
+
+        auction
+    }
+
+    fn three_passes() -> Auction {
+        let mut auction = Auction::new(Seat::West);
+        auction.sequence.append(&mut vec![AuctionBid::Pass; 3]);
+
+        auction
     }
 
     #[test]
@@ -266,8 +379,7 @@ mod test {
         assert_eq!(Seat::South, Seat::North + 2);
         assert_eq!(Seat::South, Seat::North + 6);
 
-        let mut auction = Auction::new(Seat::West);
-        auction.sequence.append(&mut vec![AuctionBid::Pass; 3]);
+        let auction = three_passes();
         assert_eq!(Seat::South, auction.turn());
 
         assert!(!auction.closed());
@@ -285,16 +397,7 @@ mod test {
 
     #[test]
     fn auction_by_seat() {
-        let mut auction = Auction::new(Seat::South);
-        auction.sequence.append(&mut vec![AuctionBid::Pass; 2]);
-        auction.sequence.push("1D".parse().unwrap());
-        auction.sequence.push("1H".parse().unwrap());
-        auction.sequence.push("1NT".parse().unwrap());
-        auction.sequence.push(AuctionBid::Pass);
-        auction.sequence.push("2NT".parse().unwrap());
-        auction.sequence.push(AuctionBid::Pass);
-        auction.sequence.push("3NT".parse().unwrap());
-        auction.sequence.append(&mut vec![AuctionBid::Pass; 3]);
+        let auction = game_with_small_interference();
 
         assert_eq!(
             vec![
@@ -319,5 +422,21 @@ mod test {
         );
 
         assert!(auction.closed());
+    }
+
+    #[test]
+    fn auction_completion() {
+        let game_auction = game_with_small_interference();
+
+        assert!(game_auction.closed());
+        assert_eq!(
+            Some("3NT".parse::<Contract>().unwrap()),
+            game_auction.contract()
+        );
+
+        let three_passes = three_passes();
+
+        assert!(!three_passes.closed());
+        assert_eq!(None, three_passes.contract());
     }
 }
