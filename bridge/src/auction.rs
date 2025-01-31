@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::ops::{Add, Sub};
 
 use deranged::RangedU8;
 use strum::FromRepr;
@@ -62,6 +62,22 @@ impl Add<usize> for Seat {
 
     fn add(self, rhs: usize) -> Self::Output {
         Seat::from_repr((self as usize + rhs) % 4).unwrap()
+    }
+}
+
+impl Sub<usize> for Seat {
+    type Output = Self;
+
+    fn sub(self, rhs: usize) -> Self::Output {
+        Seat::from_repr((((self as isize - rhs as isize) % 4) + 4) as usize % 4).unwrap()
+    }
+}
+
+impl Sub<Seat> for Seat {
+    type Output = usize;
+
+    fn sub(self, rhs: Seat) -> Self::Output {
+        ((self as isize - rhs as isize) + 4) as usize % 4
     }
 }
 
@@ -137,5 +153,15 @@ mod test {
         let mut auction = Auction::new(Seat::West);
         auction.sequence.append(&mut vec![AuctionBid::Pass; 3]);
         assert_eq!(Seat::South, auction.turn());
+    }
+
+    #[test]
+    fn seat_subtraction() {
+        assert_eq!(Seat::South, Seat::North - 2);
+        assert_eq!(Seat::East, Seat::North - 3);
+        assert_eq!(Seat::South, Seat::West - 5);
+
+        assert_eq!(2, Seat::North - Seat::South);
+        assert_eq!(Seat::East - Seat::West, Seat::West - Seat::East);
     }
 }
