@@ -85,11 +85,13 @@ impl FromStr for AuctionBid {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "pass" | "p" => Ok(Self::Pass),
-            "double" | "x" => Ok(Self::Double),
-            "redouble" | "xx" => Ok(Self::Redouble),
-            _ => Ok(AuctionBid::Bid(s.parse()?)),
+        let mut massaged = s.to_lowercase();
+        massaged.retain(|c| !c.is_whitespace());
+        match massaged.as_str() {
+            "pass" | "p" | "nobid" => Ok(Self::Pass),
+            "double" | "x" | "dbl" => Ok(Self::Double),
+            "redouble" | "xx" | "redbl" => Ok(Self::Redouble),
+            _ => Ok(AuctionBid::Bid(massaged.parse()?)),
         }
     }
 }
@@ -177,6 +179,10 @@ mod test {
         assert_eq!(
             Ok(AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Spades)).unwrap()),
             "1s".parse()
+        );
+        assert_eq!(
+            Ok(AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Clubs)).unwrap()),
+            "1c".parse()
         );
 
         assert_eq!(

@@ -1,4 +1,7 @@
+use std::io::{self, Write};
+
 use parker::{
+    auction::AuctionBid,
     card::{Card, Rank, Suit},
     deck::Deck,
 };
@@ -27,4 +30,16 @@ fn main() {
         north.distribution(),
         north.hcp()
     );
+
+    loop {
+        print!("\n\n> ");
+        io::stdout().flush().unwrap();
+
+        let mut buffer = String::new();
+        io::stdin().read_line(&mut buffer).unwrap();
+
+        buffer = buffer.trim().to_string();
+
+        println!("'{}' gives {:?}", buffer, buffer.parse::<AuctionBid>())
+    }
 }
