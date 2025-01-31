@@ -35,7 +35,7 @@ pub enum AuctionBid {
 }
 
 impl AuctionBid {
-    pub fn new(level: u8, suit: BiddingSuit) -> Result<Self, String> {
+    pub fn suit_bid(level: u8, suit: BiddingSuit) -> Result<Self, String> {
         Ok(Self::Bid(Bid::new(level, suit)?))
     }
 }
@@ -140,11 +140,11 @@ mod test {
     #[test]
     fn auction_bid_ordering() {
         assert!(
-            AuctionBid::new(6, BiddingSuit::Suit(Suit::Hearts)).unwrap()
-                > AuctionBid::new(4, BiddingSuit::NoTrumps).unwrap()
+            AuctionBid::suit_bid(6, BiddingSuit::Suit(Suit::Hearts)).unwrap()
+                > AuctionBid::suit_bid(4, BiddingSuit::NoTrumps).unwrap()
         );
 
-        let one_diamond = AuctionBid::new(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap();
+        let one_diamond = AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap();
         let pass = AuctionBid::Pass;
 
         assert!(!(one_diamond < pass));
@@ -179,43 +179,43 @@ mod test {
         auction.sequence.append(&mut vec![AuctionBid::Pass; 2]);
         auction
             .sequence
-            .push(AuctionBid::new(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap());
+            .push(AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap());
         auction
             .sequence
-            .push(AuctionBid::new(1, BiddingSuit::Suit(Suit::Hearts)).unwrap());
+            .push(AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Hearts)).unwrap());
         auction
             .sequence
-            .push(AuctionBid::new(1, BiddingSuit::NoTrumps).unwrap());
+            .push(AuctionBid::suit_bid(1, BiddingSuit::NoTrumps).unwrap());
         auction.sequence.push(AuctionBid::Pass);
         auction
             .sequence
-            .push(AuctionBid::new(2, BiddingSuit::NoTrumps).unwrap());
+            .push(AuctionBid::suit_bid(2, BiddingSuit::NoTrumps).unwrap());
         auction.sequence.push(AuctionBid::Pass);
         auction
             .sequence
-            .push(AuctionBid::new(3, BiddingSuit::NoTrumps).unwrap());
+            .push(AuctionBid::suit_bid(3, BiddingSuit::NoTrumps).unwrap());
         auction.sequence.append(&mut vec![AuctionBid::Pass; 3]);
 
         assert_eq!(
             vec![
                 &AuctionBid::Pass,
-                &AuctionBid::new(1, BiddingSuit::NoTrumps).unwrap(),
-                &AuctionBid::new(3, BiddingSuit::NoTrumps).unwrap(),
+                &AuctionBid::suit_bid(1, BiddingSuit::NoTrumps).unwrap(),
+                &AuctionBid::suit_bid(3, BiddingSuit::NoTrumps).unwrap(),
             ],
             auction.bids_for(Seat::South)
         );
         assert_eq!(vec![&AuctionBid::Pass; 3], auction.bids_for(Seat::West));
         assert_eq!(
             vec![
-                &AuctionBid::new(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap(),
-                &AuctionBid::new(2, BiddingSuit::NoTrumps).unwrap(),
+                &AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap(),
+                &AuctionBid::suit_bid(2, BiddingSuit::NoTrumps).unwrap(),
                 &AuctionBid::Pass,
             ],
             auction.bids_for(Seat::North)
         );
         assert_eq!(
             vec![
-                &AuctionBid::new(1, BiddingSuit::Suit(Suit::Hearts)).unwrap(),
+                &AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Hearts)).unwrap(),
                 &AuctionBid::Pass,
                 &AuctionBid::Pass
             ],
