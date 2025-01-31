@@ -1,4 +1,4 @@
-use bridge::{
+use parker::{
     card::{Card, Rank, Suit},
     deck::Deck,
 };

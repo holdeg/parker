@@ -1,10 +1,10 @@
 [package]
-name = "parker"
+name = "driver"
 version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = ["bridge"]
+members = ["lib"]
 
 [dependencies]
-bridge = { path = "bridge" }
+parker = { path = "lib" }
