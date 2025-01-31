@@ -1,5 +1,6 @@
 use std::{
     cmp::max,
+    collections::VecDeque,
     fmt::Display,
     ops::{Add, Sub},
     str::FromStr,
@@ -216,6 +217,40 @@ impl Default for Auction {
             dealer: Seat::North,
             sequence: Default::default(),
         }
+    }
+}
+
+impl Display for Auction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let headers = "+-- N --+-- E --+-- S --+-- W --+";
+        let divider = "+-------+-------+-------+-------+";
+
+        let mut buffer = headers.to_string();
+
+        let mut string_bids: VecDeque<_> = self
+            .sequence
+            .clone()
+            .into_iter()
+            .map(|bid| bid.to_string())
+            .collect();
+
+        for _ in 0..self.dealer as usize {
+            string_bids.push_front("".to_string());
+        }
+
+        let mut bid_iterator = string_bids.into_iter().peekable();
+        while bid_iterator.peek().is_some() {
+            buffer += &format!(
+                "\n| {0: <5} | {1: <5} | {2: <5} | {3: <5} |\n",
+                bid_iterator.next().unwrap_or_default(),
+                bid_iterator.next().unwrap_or_default(),
+                bid_iterator.next().unwrap_or_default(),
+                bid_iterator.next().unwrap_or_default()
+            );
+            buffer += divider;
+        }
+
+        f.write_str(&buffer)
     }
 }
 
@@ -465,5 +500,30 @@ mod test {
 
         assert!(!three_passes.closed());
         assert_eq!(None, three_passes.contract());
+    }
+
+    #[test]
+    fn auction_display() {
+        assert_eq!(
+            "+-- N --+-- E --+-- S --+-- W --+\n\
+             |       |       | Pass  | Pass  |\n\
+             +-------+-------+-------+-------+\n\
+             | 1♦    | 1♥    | 1NT   | Pass  |\n\
+             +-------+-------+-------+-------+\n\
+             | 2NT   | Pass  | 3NT   | Pass  |\n\
+             +-------+-------+-------+-------+\n\
+             | Pass  | Pass  |       |       |\n\
+             +-------+-------+-------+-------+",
+            game_with_small_interference().to_string()
+        );
+
+        assert_eq!(
+            "+-- N --+-- E --+-- S --+-- W --+\n\
+             |       |       |       | Pass  |\n\
+             +-------+-------+-------+-------+\n\
+             | Pass  | Pass  |       |       |\n\
+             +-------+-------+-------+-------+",
+            three_passes().to_string()
+        );
     }
 }
