@@ -37,12 +37,12 @@ impl Display for BiddingSuit {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Bid {
+pub struct ContractBid {
     level: RangedU8<1, 7>,
     suit: BiddingSuit,
 }
 
-impl Bid {
+impl ContractBid {
     pub fn new(level: u8, suit: BiddingSuit) -> Result<Self, String> {
         Ok(Self {
             level: RangedU8::new(level).ok_or("bid level must be between 1 and 7, inclusive")?,
@@ -51,7 +51,7 @@ impl Bid {
     }
 }
 
-impl FromStr for Bid {
+impl FromStr for ContractBid {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -69,7 +69,7 @@ impl FromStr for Bid {
     }
 }
 
-impl Display for Bid {
+impl Display for ContractBid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!("{}{}", self.level, self.suit))
     }
@@ -77,7 +77,7 @@ impl Display for Bid {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AuctionBid {
-    Bid(Bid),
+    Bid(ContractBid),
     Pass,
     Double,
     Redouble,
@@ -85,7 +85,7 @@ pub enum AuctionBid {
 
 impl AuctionBid {
     pub fn suit_bid(level: u8, suit: BiddingSuit) -> Result<Self, String> {
-        Ok(Self::Bid(Bid::new(level, suit)?))
+        Ok(Self::Bid(ContractBid::new(level, suit)?))
     }
 }
 
@@ -165,12 +165,12 @@ pub enum Status {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Contract {
-    pub bid: Bid,
+    pub bid: ContractBid,
     pub status: Status,
 }
 
-impl From<Bid> for Contract {
-    fn from(value: Bid) -> Self {
+impl From<ContractBid> for Contract {
+    fn from(value: ContractBid) -> Self {
         Self {
             bid: value,
             status: Status::Undoubled,
@@ -303,7 +303,6 @@ mod test {
         assert_eq!(Err(ParseError::TooShort), "".parse::<AuctionBid>());
     }
 
-    //TODO expand this into proper UTs
     #[test]
     fn parse_contract() {
         assert_eq!(
@@ -313,6 +312,34 @@ mod test {
             }),
             "1sxx".parse()
         );
+        assert_eq!(
+            Ok(Contract {
+                bid: "2nt".parse().unwrap(),
+                status: Status::Undoubled
+            }),
+            "2nt".parse()
+        );
+        assert_eq!(
+            Ok(Contract {
+                bid: "3h".parse().unwrap(),
+                status: Status::Doubled
+            }),
+            "3h x".parse()
+        );
+        assert_eq!(
+            Ok(Contract {
+                bid: "4d".parse().unwrap(),
+                status: Status::Redoubled
+            }),
+            "4    diamond x    x   ".parse()
+        );
+
+        assert_eq!(Err(ParseError::TooShort), "".parse::<Contract>());
+        assert_eq!(
+            Err(ParseError::BidLevelOutOfBounds),
+            "8cxx".parse::<Contract>()
+        );
+        assert_eq!(Err(ParseError::SuitNotValid), "5dxxx".parse::<Contract>());
     }
 
     fn game_with_small_interference() -> Auction {
@@ -339,11 +366,11 @@ mod test {
 
     #[test]
     fn bid_comparison() {
-        assert!("6H".parse::<Bid>().unwrap() > "4NT".parse().unwrap());
-        assert!("1D".parse::<Bid>().unwrap() > "1C".parse().unwrap());
-        assert!("2NT".parse::<Bid>().unwrap() > "2S".parse().unwrap());
-        assert!("3H".parse::<Bid>().unwrap() == "3H".parse().unwrap());
-        assert!("5C".parse::<Bid>().unwrap() != "4C".parse().unwrap());
+        assert!("6H".parse::<ContractBid>().unwrap() > "4NT".parse().unwrap());
+        assert!("1D".parse::<ContractBid>().unwrap() > "1C".parse().unwrap());
+        assert!("2NT".parse::<ContractBid>().unwrap() > "2S".parse().unwrap());
+        assert!("3H".parse::<ContractBid>().unwrap() == "3H".parse().unwrap());
+        assert!("5C".parse::<ContractBid>().unwrap() != "4C".parse().unwrap());
     }
 
     #[test]
