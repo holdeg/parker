@@ -1,4 +1,7 @@
-use std::ops::{Add, Sub};
+use std::{
+    ops::{Add, Sub},
+    str::FromStr,
+};
 
 use deranged::RangedU8;
 use strum::FromRepr;
@@ -11,6 +14,17 @@ pub enum BiddingSuit {
     NoTrumps,
 }
 
+impl FromStr for BiddingSuit {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "nt" | "notrumps" | "no trumps" => Ok(Self::NoTrumps),
+            _ => Ok(Self::Suit(s.parse()?)),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Bid {
     level: RangedU8<1, 7>,
@@ -20,8 +34,24 @@ pub struct Bid {
 impl Bid {
     pub fn new(level: u8, suit: BiddingSuit) -> Result<Self, String> {
         Ok(Self {
-            level: RangedU8::new(level).ok_or("Bid level must be between 1 and 7, inclusive")?,
+            level: RangedU8::new(level).ok_or("bid level must be between 1 and 7, inclusive")?,
             suit,
+        })
+    }
+}
+
+impl FromStr for Bid {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (level, suit) = s
+            .split_at_checked(1)
+            .ok_or("could not determine level or suit")?;
+
+        Ok(Self {
+            level: RangedU8::new(level.parse().map_err(|_| "bid level not an integer")?)
+                .ok_or("bid level must be between 1 and 7, inclusive")?,
+            suit: suit.parse()?,
         })
     }
 }
@@ -45,6 +75,19 @@ impl PartialOrd for AuctionBid {
         match (self, other) {
             (Self::Bid(self_bid), Self::Bid(other_bid)) => Some(self_bid.cmp(other_bid)),
             _ => None,
+        }
+    }
+}
+
+impl FromStr for AuctionBid {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "pass" | "p" => Ok(Self::Pass),
+            "double" | "x" => Ok(Self::Double),
+            "redouble" | "xx" => Ok(Self::Redouble),
+            _ => Ok(AuctionBid::Bid(s.parse()?)),
         }
     }
 }
@@ -151,6 +194,20 @@ mod test {
         assert!(!(one_diamond > pass));
         assert!(!(one_diamond <= pass));
         assert!(!(one_diamond >= pass));
+    }
+
+    #[test]
+    fn parse_auction_bid() {
+        assert_eq!(AuctionBid::Pass, "pass".parse().unwrap());
+        assert_eq!(
+            AuctionBid::suit_bid(4, BiddingSuit::NoTrumps).unwrap(),
+            "4NT".parse().unwrap()
+        );
+        assert_eq!(AuctionBid::Redouble, "xx".parse().unwrap());
+        assert_eq!(
+            AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Spades)).unwrap(),
+            "1s".parse().unwrap()
+        );
     }
 
     #[test]

@@ -13,6 +13,20 @@ pub enum Suit {
     Clubs = 0,
 }
 
+impl FromStr for Suit {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "spades" | "s" => Ok(Self::Spades),
+            "hearts" | "h" => Ok(Self::Hearts),
+            "diamonds" | "d" => Ok(Self::Diamonds),
+            "clubs" | "c" => Ok(Self::Clubs),
+            _ => Err("not a suit".to_string()),
+        }
+    }
+}
+
 impl From<Suit> for char {
     fn from(value: Suit) -> Self {
         match value {
