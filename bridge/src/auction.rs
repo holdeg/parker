@@ -31,6 +31,29 @@ pub enum AuctionBid {
     Redouble,
 }
 
+impl AuctionBid {
+    pub fn new(level: u8, suit: BiddingSuit) -> Result<Self, String> {
+        Ok(Self::Bid(Bid::new(level, suit)?))
+    }
+}
+
+impl PartialOrd for AuctionBid {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self, other) {
+            (Self::Bid(self_bid), Self::Bid(other_bid)) => Some(self_bid.cmp(other_bid)),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Seat {
+    North,
+    East,
+    South,
+    West,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -49,5 +72,21 @@ mod test {
             Bid::new(2, BiddingSuit::NoTrumps).unwrap()
                 > Bid::new(2, BiddingSuit::Suit(Suit::Spades)).unwrap()
         );
+    }
+
+    #[test]
+    fn auction_bid_ordering() {
+        assert!(
+            AuctionBid::new(6, BiddingSuit::Suit(Suit::Hearts)).unwrap()
+                > AuctionBid::new(4, BiddingSuit::NoTrumps).unwrap()
+        );
+
+        let one_diamond = AuctionBid::new(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap();
+        let pass = AuctionBid::Pass;
+
+        assert!(!(one_diamond < pass));
+        assert!(!(one_diamond > pass));
+        assert!(!(one_diamond <= pass));
+        assert!(!(one_diamond >= pass));
     }
 }
