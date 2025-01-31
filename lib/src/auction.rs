@@ -167,49 +167,50 @@ mod test {
     use super::*;
 
     #[test]
-    fn bid_ordering() {
-        assert!(
-            Bid::new(6, BiddingSuit::Suit(Suit::Hearts)).unwrap()
-                > Bid::new(4, BiddingSuit::NoTrumps).unwrap()
+    fn parse_auction_bid() {
+        assert_eq!(Ok(AuctionBid::Pass), "pass".parse());
+        assert_eq!(
+            Ok(AuctionBid::suit_bid(4, BiddingSuit::NoTrumps).unwrap()),
+            "4NT".parse()
         );
-        assert!(
-            Bid::new(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap()
-                > Bid::new(1, BiddingSuit::Suit(Suit::Clubs)).unwrap()
+        assert_eq!(Ok(AuctionBid::Redouble), "xx".parse());
+        assert_eq!(
+            Ok(AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Spades)).unwrap()),
+            "1s".parse()
         );
-        assert!(
-            Bid::new(2, BiddingSuit::NoTrumps).unwrap()
-                > Bid::new(2, BiddingSuit::Suit(Suit::Spades)).unwrap()
+
+        assert_eq!(
+            Err(ParseError::BidLevelOutOfBounds),
+            "8s".parse::<AuctionBid>()
         );
+        assert_eq!(Err(ParseError::SuitNotValid), "5a".parse::<AuctionBid>());
+        assert_eq!(
+            Err(ParseError::BidLevelNotAnInteger),
+            "ant".parse::<AuctionBid>()
+        );
+        assert_eq!(Err(ParseError::TooShort), "".parse::<AuctionBid>());
+    }
+
+    #[test]
+    fn bid_comparison() {
+        assert!("6H".parse::<Bid>().unwrap() > "4NT".parse().unwrap());
+        assert!("1D".parse::<Bid>().unwrap() > "1C".parse().unwrap());
+        assert!("2NT".parse::<Bid>().unwrap() > "2S".parse().unwrap());
+        assert!("3H".parse::<Bid>().unwrap() == "3H".parse().unwrap());
+        assert!("5C".parse::<Bid>().unwrap() != "4C".parse().unwrap());
     }
 
     #[test]
     fn auction_bid_ordering() {
-        assert!(
-            AuctionBid::suit_bid(6, BiddingSuit::Suit(Suit::Hearts)).unwrap()
-                > AuctionBid::suit_bid(4, BiddingSuit::NoTrumps).unwrap()
-        );
+        assert!("6H".parse::<AuctionBid>().unwrap() > "4NT".parse().unwrap());
 
-        let one_diamond = AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap();
+        let one_diamond: AuctionBid = "1D".parse().unwrap();
         let pass = AuctionBid::Pass;
 
         assert!(!(one_diamond < pass));
         assert!(!(one_diamond > pass));
         assert!(!(one_diamond <= pass));
         assert!(!(one_diamond >= pass));
-    }
-
-    #[test]
-    fn parse_auction_bid() {
-        assert_eq!(AuctionBid::Pass, "pass".parse().unwrap());
-        assert_eq!(
-            AuctionBid::suit_bid(4, BiddingSuit::NoTrumps).unwrap(),
-            "4NT".parse().unwrap()
-        );
-        assert_eq!(AuctionBid::Redouble, "xx".parse().unwrap());
-        assert_eq!(
-            AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Spades)).unwrap(),
-            "1s".parse().unwrap()
-        );
     }
 
     #[test]
@@ -236,48 +237,34 @@ mod test {
     fn auction_by_seat() {
         let mut auction = Auction::new(Seat::South);
         auction.sequence.append(&mut vec![AuctionBid::Pass; 2]);
-        auction
-            .sequence
-            .push(AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap());
-        auction
-            .sequence
-            .push(AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Hearts)).unwrap());
-        auction
-            .sequence
-            .push(AuctionBid::suit_bid(1, BiddingSuit::NoTrumps).unwrap());
+        auction.sequence.push("1D".parse().unwrap());
+        auction.sequence.push("1H".parse().unwrap());
+        auction.sequence.push("1NT".parse().unwrap());
         auction.sequence.push(AuctionBid::Pass);
-        auction
-            .sequence
-            .push(AuctionBid::suit_bid(2, BiddingSuit::NoTrumps).unwrap());
+        auction.sequence.push("2NT".parse().unwrap());
         auction.sequence.push(AuctionBid::Pass);
-        auction
-            .sequence
-            .push(AuctionBid::suit_bid(3, BiddingSuit::NoTrumps).unwrap());
+        auction.sequence.push("3NT".parse().unwrap());
         auction.sequence.append(&mut vec![AuctionBid::Pass; 3]);
 
         assert_eq!(
             vec![
                 &AuctionBid::Pass,
-                &AuctionBid::suit_bid(1, BiddingSuit::NoTrumps).unwrap(),
-                &AuctionBid::suit_bid(3, BiddingSuit::NoTrumps).unwrap(),
+                &"1NT".parse().unwrap(),
+                &"3NT".parse().unwrap(),
             ],
             auction.bids_for(Seat::South)
         );
         assert_eq!(vec![&AuctionBid::Pass; 3], auction.bids_for(Seat::West));
         assert_eq!(
             vec![
-                &AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap(),
-                &AuctionBid::suit_bid(2, BiddingSuit::NoTrumps).unwrap(),
+                &"1D".parse().unwrap(),
+                &"2NT".parse().unwrap(),
                 &AuctionBid::Pass,
             ],
             auction.bids_for(Seat::North)
         );
         assert_eq!(
-            vec![
-                &AuctionBid::suit_bid(1, BiddingSuit::Suit(Suit::Hearts)).unwrap(),
-                &AuctionBid::Pass,
-                &AuctionBid::Pass
-            ],
+            vec![&"1H".parse().unwrap(), &AuctionBid::Pass, &AuctionBid::Pass],
             auction.bids_for(Seat::East)
         );
     }
