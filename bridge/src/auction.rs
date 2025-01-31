@@ -6,7 +6,7 @@ use std::{
 use deranged::RangedU8;
 use strum::FromRepr;
 
-use crate::card::Suit;
+use crate::{card::Suit, error::ParseError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BiddingSuit {
@@ -15,7 +15,7 @@ pub enum BiddingSuit {
 }
 
 impl FromStr for BiddingSuit {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
@@ -41,16 +41,18 @@ impl Bid {
 }
 
 impl FromStr for Bid {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (level, suit) = s
-            .split_at_checked(1)
-            .ok_or("could not determine level or suit")?;
+        let (level, suit) = s.split_at_checked(1).ok_or(ParseError::TooShort)?;
 
         Ok(Self {
-            level: RangedU8::new(level.parse().map_err(|_| "bid level not an integer")?)
-                .ok_or("bid level must be between 1 and 7, inclusive")?,
+            level: RangedU8::new(
+                level
+                    .parse()
+                    .map_err(|_| ParseError::BidLevelNotAnInteger)?,
+            )
+            .ok_or(ParseError::BidLevelOutOfBounds)?,
             suit: suit.parse()?,
         })
     }
@@ -80,7 +82,7 @@ impl PartialOrd for AuctionBid {
 }
 
 impl FromStr for AuctionBid {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {

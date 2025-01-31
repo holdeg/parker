@@ -5,6 +5,8 @@ use std::{
 
 use strum::EnumIter;
 
+use crate::error::ParseError;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, EnumIter)]
 pub enum Suit {
     Spades = 3,
@@ -14,7 +16,7 @@ pub enum Suit {
 }
 
 impl FromStr for Suit {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
@@ -22,7 +24,7 @@ impl FromStr for Suit {
             "hearts" | "h" => Ok(Self::Hearts),
             "diamonds" | "d" => Ok(Self::Diamonds),
             "clubs" | "c" => Ok(Self::Clubs),
-            _ => Err("not a suit".to_string()),
+            _ => Err(ParseError::SuitNotValid),
         }
     }
 }
@@ -39,7 +41,7 @@ impl From<Suit> for char {
 }
 
 impl TryFrom<char> for Suit {
-    type Error = String;
+    type Error = ParseError;
 
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value {
@@ -47,7 +49,7 @@ impl TryFrom<char> for Suit {
             'H' => Ok(Suit::Hearts),
             'D' => Ok(Suit::Diamonds),
             'C' => Ok(Suit::Clubs),
-            _ => Err(format!("provided char {} is not a suit", value)),
+            _ => Err(ParseError::SuitNotValid),
         }
     }
 }
@@ -133,7 +135,7 @@ impl From<Rank> for char {
 }
 
 impl TryFrom<char> for Rank {
-    type Error = String;
+    type Error = ParseError;
 
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value {
@@ -150,13 +152,13 @@ impl TryFrom<char> for Rank {
             'Q' => Ok(Rank::Queen),
             'K' => Ok(Rank::King),
             'A' => Ok(Rank::Ace),
-            _ => Err(format!("provided char {} is not a rank", value)),
+            _ => Err(ParseError::RankNotValid),
         }
     }
 }
 
 impl TryFrom<u8> for Rank {
-    type Error = ();
+    type Error = ParseError;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
@@ -173,7 +175,7 @@ impl TryFrom<u8> for Rank {
             12 => Ok(Rank::Queen),
             13 => Ok(Rank::King),
             14 => Ok(Rank::Ace),
-            _ => Err(()),
+            _ => Err(ParseError::RankNotValid),
         }
     }
 }
@@ -191,14 +193,14 @@ impl Display for Card {
 }
 
 impl FromStr for Card {
-    type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut char_iter = s.chars();
-        let rank = char_iter.next().ok_or("couldn't determine rank char")?;
-        let suit = char_iter.next().ok_or("couldn't determine suit char")?;
+        let rank = char_iter.next().ok_or(ParseError::TooShort)?;
+        let suit = char_iter.next().ok_or(ParseError::TooShort)?;
         if char_iter.next().is_some() {
-            Err("too many chars provided")?;
+            Err(ParseError::TooLong)?;
         }
 
         Ok(Self {
