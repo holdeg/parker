@@ -234,6 +234,21 @@ mod test {
     }
 
     #[test]
+    fn auction_bid_displays() {
+        assert_eq!("6♥", "6H".parse::<AuctionBid>().unwrap().to_string());
+        assert_eq!(
+            "7NT",
+            "7 no trumps".parse::<AuctionBid>().unwrap().to_string()
+        );
+        assert_eq!("Pass", "no bid".parse::<AuctionBid>().unwrap().to_string());
+        assert_eq!("Dbl", "x".parse::<AuctionBid>().unwrap().to_string());
+        assert_eq!(
+            "Redbl",
+            "redouble".parse::<AuctionBid>().unwrap().to_string()
+        );
+    }
+
+    #[test]
     fn auction_bid_ordering() {
         assert!("6H".parse::<AuctionBid>().unwrap() > "4NT".parse().unwrap());
 
@@ -254,6 +269,8 @@ mod test {
         let mut auction = Auction::new(Seat::West);
         auction.sequence.append(&mut vec![AuctionBid::Pass; 3]);
         assert_eq!(Seat::South, auction.turn());
+
+        assert!(!auction.closed());
     }
 
     #[test]
@@ -300,5 +317,7 @@ mod test {
             vec![&"1H".parse().unwrap(), &AuctionBid::Pass, &AuctionBid::Pass],
             auction.bids_for(Seat::East)
         );
+
+        assert!(auction.closed());
     }
 }
