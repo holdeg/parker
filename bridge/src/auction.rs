@@ -83,7 +83,7 @@ impl Sub<Seat> for Seat {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Auction {
-    pub dealer: Seat,
+    dealer: Seat,
     pub sequence: Vec<AuctionBid>,
 }
 
@@ -106,6 +106,14 @@ impl Auction {
 
     pub fn turn(&self) -> Seat {
         self.dealer + self.sequence.len()
+    }
+
+    pub fn bids_for(&self, seat: Seat) -> Vec<&AuctionBid> {
+        self.sequence
+            .iter()
+            .skip(seat - self.dealer)
+            .step_by(4)
+            .collect()
     }
 }
 
@@ -163,5 +171,55 @@ mod test {
 
         assert_eq!(2, Seat::North - Seat::South);
         assert_eq!(Seat::East - Seat::West, Seat::West - Seat::East);
+    }
+
+    #[test]
+    fn auction_by_seat() {
+        let mut auction = Auction::new(Seat::South);
+        auction.sequence.append(&mut vec![AuctionBid::Pass; 2]);
+        auction
+            .sequence
+            .push(AuctionBid::new(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap());
+        auction
+            .sequence
+            .push(AuctionBid::new(1, BiddingSuit::Suit(Suit::Hearts)).unwrap());
+        auction
+            .sequence
+            .push(AuctionBid::new(1, BiddingSuit::NoTrumps).unwrap());
+        auction.sequence.push(AuctionBid::Pass);
+        auction
+            .sequence
+            .push(AuctionBid::new(2, BiddingSuit::NoTrumps).unwrap());
+        auction.sequence.push(AuctionBid::Pass);
+        auction
+            .sequence
+            .push(AuctionBid::new(3, BiddingSuit::NoTrumps).unwrap());
+        auction.sequence.append(&mut vec![AuctionBid::Pass; 3]);
+
+        assert_eq!(
+            vec![
+                &AuctionBid::Pass,
+                &AuctionBid::new(1, BiddingSuit::NoTrumps).unwrap(),
+                &AuctionBid::new(3, BiddingSuit::NoTrumps).unwrap(),
+            ],
+            auction.bids_for(Seat::South)
+        );
+        assert_eq!(vec![&AuctionBid::Pass; 3], auction.bids_for(Seat::West));
+        assert_eq!(
+            vec![
+                &AuctionBid::new(1, BiddingSuit::Suit(Suit::Diamonds)).unwrap(),
+                &AuctionBid::new(2, BiddingSuit::NoTrumps).unwrap(),
+                &AuctionBid::Pass,
+            ],
+            auction.bids_for(Seat::North)
+        );
+        assert_eq!(
+            vec![
+                &AuctionBid::new(1, BiddingSuit::Suit(Suit::Hearts)).unwrap(),
+                &AuctionBid::Pass,
+                &AuctionBid::Pass
+            ],
+            auction.bids_for(Seat::East)
+        );
     }
 }
