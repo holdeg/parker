@@ -1,4 +1,7 @@
+use std::ops::Add;
+
 use deranged::RangedU8;
+use strum::FromRepr;
 
 use crate::card::Suit;
 
@@ -46,12 +49,48 @@ impl PartialOrd for AuctionBid {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, FromRepr)]
 pub enum Seat {
-    North,
+    North = 0,
     East,
     South,
     West,
+}
+
+impl Add<usize> for Seat {
+    type Output = Self;
+
+    fn add(self, rhs: usize) -> Self::Output {
+        Seat::from_repr((self as usize + rhs) % 4).unwrap()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Auction {
+    pub dealer: Seat,
+    pub sequence: Vec<AuctionBid>,
+}
+
+impl Default for Auction {
+    fn default() -> Self {
+        Self {
+            dealer: Seat::North,
+            sequence: Default::default(),
+        }
+    }
+}
+
+impl Auction {
+    pub fn new(dealer: Seat) -> Self {
+        Self {
+            dealer,
+            sequence: vec![],
+        }
+    }
+
+    pub fn turn(&self) -> Seat {
+        self.dealer + self.sequence.len()
+    }
 }
 
 #[cfg(test)]
@@ -88,5 +127,15 @@ mod test {
         assert!(!(one_diamond > pass));
         assert!(!(one_diamond <= pass));
         assert!(!(one_diamond >= pass));
+    }
+
+    #[test]
+    fn seat_addition() {
+        assert_eq!(Seat::South, Seat::North + 2);
+        assert_eq!(Seat::South, Seat::North + 6);
+
+        let mut auction = Auction::new(Seat::West);
+        auction.sequence.append(&mut vec![AuctionBid::Pass; 3]);
+        assert_eq!(Seat::South, auction.turn());
     }
 }
