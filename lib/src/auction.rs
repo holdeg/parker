@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     ops::{Add, Sub},
     str::FromStr,
 };
@@ -21,6 +22,15 @@ impl FromStr for BiddingSuit {
         match s.to_lowercase().as_str() {
             "nt" | "notrumps" | "no trumps" => Ok(Self::NoTrumps),
             _ => Ok(Self::Suit(s.parse()?)),
+        }
+    }
+}
+
+impl Display for BiddingSuit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Suit(suit) => suit.fmt(f),
+            Self::NoTrumps => f.write_str("NT"),
         }
     }
 }
@@ -58,6 +68,12 @@ impl FromStr for Bid {
     }
 }
 
+impl Display for Bid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{}{}", self.level, self.suit))
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AuctionBid {
     Bid(Bid),
@@ -92,6 +108,17 @@ impl FromStr for AuctionBid {
             "double" | "x" | "dbl" => Ok(Self::Double),
             "redouble" | "xx" | "redbl" => Ok(Self::Redouble),
             _ => Ok(AuctionBid::Bid(massaged.parse()?)),
+        }
+    }
+}
+
+impl Display for AuctionBid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Bid(bid) => bid.fmt(f),
+            AuctionBid::Pass => f.write_str("Pass"),
+            AuctionBid::Double => f.write_str("Dbl"),
+            AuctionBid::Redouble => f.write_str("Redbl"),
         }
     }
 }

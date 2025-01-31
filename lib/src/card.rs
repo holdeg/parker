@@ -20,10 +20,10 @@ impl FromStr for Suit {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "spades" | "s" => Ok(Self::Spades),
-            "hearts" | "h" => Ok(Self::Hearts),
-            "diamonds" | "d" => Ok(Self::Diamonds),
-            "clubs" | "c" => Ok(Self::Clubs),
+            "spades" | "s" | "spade" => Ok(Self::Spades),
+            "hearts" | "h" | "heart" => Ok(Self::Hearts),
+            "diamonds" | "d" | "diamond" => Ok(Self::Diamonds),
+            "clubs" | "c" | "club" => Ok(Self::Clubs),
             _ => Err(ParseError::SuitNotValid),
         }
     }
@@ -45,10 +45,10 @@ impl TryFrom<char> for Suit {
 
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value {
-            'S' => Ok(Suit::Spades),
-            'H' => Ok(Suit::Hearts),
-            'D' => Ok(Suit::Diamonds),
-            'C' => Ok(Suit::Clubs),
+            'S' => Ok(Self::Spades),
+            'H' => Ok(Self::Hearts),
+            'D' => Ok(Self::Diamonds),
+            'C' => Ok(Self::Clubs),
             _ => Err(ParseError::SuitNotValid),
         }
     }
@@ -57,10 +57,10 @@ impl TryFrom<char> for Suit {
 impl Display for Suit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_char(match self {
-            Suit::Spades => '♠',
-            Suit::Hearts => '♥',
-            Suit::Diamonds => '♦',
-            Suit::Clubs => '♣',
+            Self::Spades => '♠',
+            Self::Hearts => '♥',
+            Self::Diamonds => '♦',
+            Self::Clubs => '♣',
         })
     }
 }
@@ -85,10 +85,10 @@ pub enum Rank {
 impl Rank {
     pub fn high_card_points(&self) -> u8 {
         match self {
-            Rank::Jack => 1,
-            Rank::Queen => 2,
-            Rank::King => 3,
-            Rank::Ace => 4,
+            Self::Jack => 1,
+            Self::Queen => 2,
+            Self::King => 3,
+            Self::Ace => 4,
             _ => 0,
         }
     }
@@ -97,19 +97,19 @@ impl Rank {
 impl Display for Rank {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            Rank::Two => "2",
-            Rank::Three => "3",
-            Rank::Four => "4",
-            Rank::Five => "5",
-            Rank::Six => "6",
-            Rank::Seven => "7",
-            Rank::Eight => "8",
-            Rank::Nine => "9",
-            Rank::Ten => "10",
-            Rank::Jack => "J",
-            Rank::Queen => "Q",
-            Rank::King => "K",
-            Rank::Ace => "A",
+            Self::Two => "2",
+            Self::Three => "3",
+            Self::Four => "4",
+            Self::Five => "5",
+            Self::Six => "6",
+            Self::Seven => "7",
+            Self::Eight => "8",
+            Self::Nine => "9",
+            Self::Ten => "10",
+            Self::Jack => "J",
+            Self::Queen => "Q",
+            Self::King => "K",
+            Self::Ace => "A",
         })
     }
 }
@@ -139,19 +139,19 @@ impl TryFrom<char> for Rank {
 
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value {
-            '2' => Ok(Rank::Two),
-            '3' => Ok(Rank::Three),
-            '4' => Ok(Rank::Four),
-            '5' => Ok(Rank::Five),
-            '6' => Ok(Rank::Six),
-            '7' => Ok(Rank::Seven),
-            '8' => Ok(Rank::Eight),
-            '9' => Ok(Rank::Nine),
-            'T' => Ok(Rank::Ten),
-            'J' => Ok(Rank::Jack),
-            'Q' => Ok(Rank::Queen),
-            'K' => Ok(Rank::King),
-            'A' => Ok(Rank::Ace),
+            '2' => Ok(Self::Two),
+            '3' => Ok(Self::Three),
+            '4' => Ok(Self::Four),
+            '5' => Ok(Self::Five),
+            '6' => Ok(Self::Six),
+            '7' => Ok(Self::Seven),
+            '8' => Ok(Self::Eight),
+            '9' => Ok(Self::Nine),
+            'T' => Ok(Self::Ten),
+            'J' => Ok(Self::Jack),
+            'Q' => Ok(Self::Queen),
+            'K' => Ok(Self::King),
+            'A' => Ok(Self::Ace),
             _ => Err(ParseError::RankNotValid),
         }
     }
@@ -162,19 +162,19 @@ impl TryFrom<u8> for Rank {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            2 => Ok(Rank::Two),
-            3 => Ok(Rank::Three),
-            4 => Ok(Rank::Four),
-            5 => Ok(Rank::Five),
-            6 => Ok(Rank::Six),
-            7 => Ok(Rank::Seven),
-            8 => Ok(Rank::Eight),
-            9 => Ok(Rank::Nine),
-            10 => Ok(Rank::Ten),
-            11 => Ok(Rank::Jack),
-            12 => Ok(Rank::Queen),
-            13 => Ok(Rank::King),
-            14 => Ok(Rank::Ace),
+            2 => Ok(Self::Two),
+            3 => Ok(Self::Three),
+            4 => Ok(Self::Four),
+            5 => Ok(Self::Five),
+            6 => Ok(Self::Six),
+            7 => Ok(Self::Seven),
+            8 => Ok(Self::Eight),
+            9 => Ok(Self::Nine),
+            10 => Ok(Self::Ten),
+            11 => Ok(Self::Jack),
+            12 => Ok(Self::Queen),
+            13 => Ok(Self::King),
+            14 => Ok(Self::Ace),
             _ => Err(ParseError::RankNotValid),
         }
     }

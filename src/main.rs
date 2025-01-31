@@ -4,6 +4,7 @@ use parker::{
     auction::AuctionBid,
     card::{Card, Rank, Suit},
     deck::Deck,
+    error::ParseError,
 };
 
 fn main() {
@@ -39,7 +40,11 @@ fn main() {
         io::stdin().read_line(&mut buffer).unwrap();
 
         buffer = buffer.trim().to_string();
-
-        println!("'{}' gives {:?}", buffer, buffer.parse::<AuctionBid>())
+        let parsed_bid: Result<AuctionBid, ParseError> = buffer.parse();
+        let output = match parsed_bid {
+            Ok(bid) => format!("{} ({:?})", bid, parsed_bid),
+            Err(_) => format!("{:?}", parsed_bid),
+        };
+        println!("'{}' gives {}", buffer, output)
     }
 }
