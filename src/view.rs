@@ -1,9 +1,12 @@
+use std::rc::Rc;
+
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::Frame;
 
 use ratatui::{
     style::Stylize,
     symbols::border,
-    text::{Line, Text},
+    text::Line,
     widgets::{Block, Padding, Paragraph},
 };
 
@@ -11,6 +14,28 @@ use crate::model::Model;
 
 pub fn view(model: &Model, frame: &mut Frame) {
     let area = frame.area();
+
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(Constraint::from_percentages([75, 25]))
+        .split(area);
+
+    let display_area = chunks[0];
+
+    let columns = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(Constraint::from_percentages([30, 40, 30]))
+        .split(display_area);
+
+    let rects: Vec<Rc<[Rect]>> = columns
+        .iter()
+        .map(|column| {
+            Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(Constraint::from_percentages([30, 40, 30]))
+                .split(*column)
+        })
+        .collect();
 
     let title = Line::from(" Auction ".bold());
     let instructions = Line::from(vec![" Quit ".into(), "<Q> ".blue().bold()]);
@@ -20,27 +45,11 @@ pub fn view(model: &Model, frame: &mut Frame) {
         .padding(Padding::top(area.height / 2))
         .border_set(border::THICK);
 
-    let dealer = model.auction.dealer();
-    let counter_text = Text::from(vec![
-        Line::from(vec![
-            format!("{:?}: ", dealer).into(),
-            model.hands[*model.auction.dealer() as usize]
-                .to_string()
-                .into(),
-        ]),
-        Line::from(vec![
-            "N: ".into(),
-            model.hands[0].to_string().into(),
-            "E: ".into(),
-            model.hands[1].to_string().into(),
-            "S: ".into(),
-            model.hands[2].to_string().into(),
-            "W: ".into(),
-            model.hands[3].to_string().into(),
-        ]),
-    ]);
+    let auction_display = model.auction.to_string();
+    let lines = auction_display.lines();
+    let paragraph =
+        Paragraph::new(lines.map(|line| Line::from(line)).collect::<Vec<Line>>()).centered();
 
-    let paragraph = Paragraph::new(counter_text).centered().block(block);
-
-    frame.render_widget(paragraph, area);
+    frame.render_widget(block, display_area);
+    frame.render_widget(paragraph, rects[1][1]);
 }

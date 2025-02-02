@@ -12,6 +12,9 @@ pub struct Model {
 }
 
 impl Default for Model {
+    /// Returns a new Model.
+    /// **NOTE** that this implementation is not deterministic and uses RNG both to
+    /// shuffle the initial deck, and to pick the dealer.
     fn default() -> Self {
         Self::new()
     }
