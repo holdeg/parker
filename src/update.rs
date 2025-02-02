@@ -8,6 +8,7 @@ use crate::model::Model;
 pub enum Message {
     Exit,
     Typed(char),
+    Clear,
     Backspace,
     Enter,
     Bid(AuctionBid),
@@ -28,6 +29,9 @@ fn handle_key_event(key_event: KeyEvent) -> Option<Message> {
         KeyCode::Char('c') if key_event.modifiers.contains(KeyModifiers::CONTROL) => {
             Some(Message::Exit)
         }
+        KeyCode::Char('u') if key_event.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(Message::Clear)
+        }
         KeyCode::Char(key) => Some(Message::Typed(key)),
         KeyCode::Backspace => Some(Message::Backspace),
         KeyCode::Enter => Some(Message::Enter),
@@ -42,6 +46,9 @@ pub fn update(model: &mut Model, message: Message) -> Option<Message> {
         }
         Message::Typed(character) => {
             model.typed.push(character);
+        }
+        Message::Clear => {
+            model.typed = "".to_string();
         }
         Message::Backspace => {
             model.typed.pop();

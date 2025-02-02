@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use parker::auction::{AuctionBid, ContractBid};
-use ratatui::layout::{Constraint, Direction, Layout, Position, Rect};
+use ratatui::layout::{Alignment, Constraint, Direction, Layout, Position, Rect};
 use ratatui::widgets::Wrap;
 use ratatui::Frame;
 
@@ -18,12 +18,19 @@ pub fn view(model: &Model, frame: &mut Frame) {
     let area = frame.area();
 
     let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(Constraint::from_percentages([75, 25]))
+        .direction(Direction::Vertical)
+        .constraints(vec![Constraint::Fill(1), Constraint::Max(1)])
         .split(area);
 
-    view_auction_area(model, frame, chunks[0]);
-    view_typing_area(model, frame, chunks[1]);
+    let display_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(Constraint::from_percentages([75, 25]))
+        .split(chunks[0]);
+
+    view_auction_area(model, frame, display_chunks[0]);
+    view_typing_area(model, frame, display_chunks[1]);
+
+    view_control_instructions(frame, chunks[1]);
 }
 
 fn view_auction_area(model: &Model, frame: &mut Frame, display_area: Rect) {
@@ -45,10 +52,8 @@ fn view_auction_area(model: &Model, frame: &mut Frame, display_area: Rect) {
         .collect();
 
     let title = Line::from(" Auction ".bold());
-    let instructions = Line::from(vec![" Quit ".into(), "<Ctrl-c> ".blue().bold()]);
     let block = Block::bordered()
         .title(title.centered())
-        .title_bottom(instructions.centered())
         .border_set(border::THICK);
 
     let auction_display = model.auction.to_string();
@@ -97,4 +102,17 @@ fn view_typing_area(model: &Model, frame: &mut Frame, display_area: Rect) {
         rows[1].x + 3 + model.typed.len() as u16,
         rows[1].y + 1,
     ));
+}
+
+fn view_control_instructions(frame: &mut Frame, display_area: Rect) {
+    let instructions = Paragraph::new(Line::from(vec![
+        "<Ctrl-c>".dark_gray().bold(),
+        " Quit".dark_gray(),
+        " | <Ctrl-u>".dark_gray().bold(),
+        " Clear".dark_gray(),
+        " | <Enter>".dark_gray().bold(),
+        " Submit bid".dark_gray(),
+    ]))
+    .alignment(Alignment::Right);
+    frame.render_widget(instructions, display_area);
 }
