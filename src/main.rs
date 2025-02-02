@@ -1,50 +1,25 @@
-use std::io::{self, Write};
+use std::io;
 
-use parker::{
-    auction::AuctionBid,
-    card::{Card, Rank, Suit},
-    deck::Deck,
-    error::ParseError,
-};
+use model::Model;
+use update::handle_event;
 
-fn main() {
-    let ace_of_hearts = dbg!(Card {
-        suit: Suit::Hearts,
-        rank: Rank::Ace,
-    });
-    println!("{}\n", ace_of_hearts);
+pub mod model;
+pub mod update;
+pub mod view;
 
-    let mut deck = Deck::default();
-    deck.shuffle();
+fn main() -> io::Result<()> {
+    let mut terminal = ratatui::init();
+    let mut model = Model::new();
 
-    let hands = deck.deal();
-    let north = &hands[0];
-    println!(
-        "Hand: {}\nLength: {}\nDistribution: {:?}\nHCP: {}",
-        north,
-        north.len(),
-        north.distribution(),
-        north.hcp()
-    );
+    while !model.exit {
+        terminal.draw(|frame| view::view(&model, frame))?;
 
-    loop {
-        print!("\n\n> ");
-        io::stdout().flush().unwrap();
-
-        let mut buffer = String::new();
-        io::stdin().read_line(&mut buffer).unwrap();
-        if buffer.is_empty() {
-            break;
+        let mut message = handle_event(&model)?;
+        while let Some(inner) = message {
+            message = update::update(&mut model, inner)
         }
-
-        buffer = buffer.trim().to_string();
-        let parsed_bid: Result<AuctionBid, ParseError> = buffer.parse();
-        let output = match parsed_bid {
-            Ok(bid) => format!("{} ({:?})", bid, parsed_bid),
-            Err(_) => format!("{:?}", parsed_bid),
-        };
-        println!("'{}' gives {}", buffer, output)
     }
 
-    println!("All done.")
+    ratatui::restore();
+    Ok(())
 }
