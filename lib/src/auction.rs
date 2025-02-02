@@ -39,8 +39,8 @@ impl Display for BiddingSuit {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContractBid {
-    level: RangedU8<1, 7>,
-    suit: BiddingSuit,
+    pub level: RangedU8<1, 7>,
+    pub suit: BiddingSuit,
 }
 
 impl ContractBid {

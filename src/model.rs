@@ -1,6 +1,7 @@
 use parker::{
-    auction::{Auction, Seat},
+    auction::{Auction, AuctionBid, Seat},
     deck::Deck,
+    error::ParseError,
     hand::Hand,
 };
 
@@ -8,6 +9,8 @@ use parker::{
 pub struct Model {
     pub auction: Auction,
     pub hands: [Hand; 4],
+    pub typed: String,
+    pub parsed_bid: Option<Result<AuctionBid, ParseError>>,
     pub exit: bool,
 }
 
@@ -28,6 +31,8 @@ impl Model {
         Self {
             auction: Auction::new(Seat::from_repr(rand::random_range(0..3)).unwrap()),
             hands: deck.deal(),
+            typed: String::default(),
+            parsed_bid: None,
             exit: false,
         }
     }
