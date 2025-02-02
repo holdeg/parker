@@ -39,7 +39,7 @@ impl From<Vec<Card>> for Hand {
 
 impl Display for Hand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        fn collect(suit: &Vec<Card>) -> String {
+        fn collect(suit: &[Card]) -> String {
             if suit.is_empty() {
                 return "—".to_string();
             }
@@ -50,13 +50,13 @@ impl Display for Hand {
         }
         f.write_str(&format!(
             "{} {}  {} {}  {} {}  {} {}",
-            Suit::Spades.to_string(),
+            Suit::Spades,
             collect(&self.spades),
-            Suit::Hearts.to_string(),
+            Suit::Hearts,
             collect(&self.hearts),
-            Suit::Diamonds.to_string(),
+            Suit::Diamonds,
             collect(&self.diamonds),
-            Suit::Clubs.to_string(),
+            Suit::Clubs,
             collect(&self.clubs),
         ))
     }
@@ -65,6 +65,10 @@ impl Display for Hand {
 impl Hand {
     pub fn len(&self) -> usize {
         self.distribution().iter().sum()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.distribution().iter().all(|size| *size == 0)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Card> {

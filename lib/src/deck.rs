@@ -13,12 +13,11 @@ impl Default for Deck {
     fn default() -> Self {
         Self(
             Suit::iter()
-                .map(|suit| {
+                .flat_map(|suit| {
                     Rank::iter()
                         .map(|rank| Card { suit, rank })
                         .collect::<Vec<_>>()
                 })
-                .flatten()
                 .collect(),
         )
     }
@@ -34,7 +33,7 @@ impl Deck {
         [
             Hand::from(self.0.split_off(13 * 3)),
             Hand::from(self.0.split_off(13 * 2)),
-            Hand::from(self.0.split_off(13 * 1)),
+            Hand::from(self.0.split_off(13)),
             Hand::from(self.0),
         ]
     }

@@ -303,6 +303,10 @@ impl Auction {
             status,
         })
     }
+
+    pub fn dealer(&self) -> &Seat {
+        &self.dealer
+    }
 }
 
 #[cfg(test)]
