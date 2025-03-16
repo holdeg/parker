@@ -57,13 +57,8 @@ fn view_auction_area(model: &Model, frame: &mut Frame, display_area: Rect) {
         .border_set(border::THICK);
 
     let auction_display = model.auction.to_string();
-    let auction = Paragraph::new(
-        auction_display
-            .lines()
-            .map(|line| Line::from(line))
-            .collect::<Vec<Line>>(),
-    )
-    .centered();
+    let auction =
+        Paragraph::new(auction_display.lines().map(Line::from).collect::<Vec<_>>()).centered();
 
     frame.render_widget(block, display_area);
     frame.render_widget(auction, rects[1][1]);
