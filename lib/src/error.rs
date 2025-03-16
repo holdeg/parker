@@ -6,4 +6,5 @@ pub enum ParseError {
     BidLevelNotAnInteger,
     SuitNotValid,
     RankNotValid,
+    SeatNotValid,
 }

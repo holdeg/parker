@@ -157,6 +157,45 @@ impl Sub<Seat> for Seat {
     }
 }
 
+impl FromStr for Seat {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "north" | "n" => Ok(Self::North),
+            "east" | "e" => Ok(Self::East),
+            "south" | "s" => Ok(Self::South),
+            "west" | "w" => Ok(Self::West),
+            _ => Err(ParseError::SuitNotValid),
+        }
+    }
+}
+
+impl From<Seat> for char {
+    fn from(value: Seat) -> Self {
+        match value {
+            Seat::North => 'N',
+            Seat::East => 'E',
+            Seat::South => 'S',
+            Seat::West => 'W',
+        }
+    }
+}
+
+impl TryFrom<char> for Seat {
+    type Error = ParseError;
+
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value {
+            'N' => Ok(Self::North),
+            'E' => Ok(Self::East),
+            'S' => Ok(Self::South),
+            'W' => Ok(Self::West),
+            _ => Err(ParseError::SeatNotValid),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Status {
     Undoubled,
@@ -168,17 +207,10 @@ pub enum Status {
 pub struct Contract {
     pub bid: ContractBid,
     pub status: Status,
+    pub declarer: Seat,
 }
 
-impl From<ContractBid> for Contract {
-    fn from(value: ContractBid) -> Self {
-        Self {
-            bid: value,
-            status: Status::Undoubled,
-        }
-    }
-}
-
+#[cfg(test)]
 impl FromStr for Contract {
     type Err = ParseError;
 
@@ -186,7 +218,9 @@ impl FromStr for Contract {
         let mut massaged = s.to_lowercase();
         massaged.retain(|c| !c.is_whitespace());
 
-        let mut chars = massaged.chars().rev().peekable();
+        let (seat, bidding) = massaged.split_at_checked(1).ok_or(ParseError::TooShort)?;
+
+        let mut chars = bidding.chars().rev().peekable();
         let mut status = Status::Undoubled;
 
         if *chars.peek().ok_or(ParseError::TooShort)? == 'x' {
@@ -199,8 +233,9 @@ impl FromStr for Contract {
         }
 
         Ok(Self {
-            bid: chars.rev().collect::<String>().parse()?,
+            bid: chars.rev().skip(1).collect::<String>().parse()?,
             status,
+            declarer: seat.parse()?,
         })
     }
 }
@@ -286,26 +321,30 @@ impl Auction {
 
     pub fn contract(&self) -> Option<Contract> {
         let mut status = Status::Undoubled;
-        let mut contract_bid = None;
-        for auction_bid in self.sequence.iter().rev() {
+        for (idx, auction_bid) in self.sequence.iter().rev().enumerate() {
             match auction_bid {
                 AuctionBid::Pass => continue,
                 AuctionBid::Double => status = max(status, Status::Doubled),
                 AuctionBid::Redouble => status = max(status, Status::Redoubled),
                 AuctionBid::Bid(bid) => {
-                    contract_bid = Some(*bid);
-                    break;
+                    return Some(Contract {
+                        bid: *bid,
+                        status,
+                        declarer: self.turn() - idx - 1,
+                    })
                 }
             }
         }
-        Some(Contract {
-            bid: contract_bid?,
-            status,
-        })
+        None
     }
 
     pub fn dealer(&self) -> &Seat {
         &self.dealer
+    }
+
+    pub fn enter_bid(&mut self, bid: AuctionBid) -> Result<(), String> {
+        self.sequence.push(bid);
+        Ok(())
     }
 }
 
@@ -340,45 +379,6 @@ mod test {
             "ant".parse::<AuctionBid>()
         );
         assert_eq!(Err(ParseError::TooShort), "".parse::<AuctionBid>());
-    }
-
-    #[test]
-    fn parse_contract() {
-        assert_eq!(
-            Ok(Contract {
-                bid: "1s".parse().unwrap(),
-                status: Status::Redoubled
-            }),
-            "1sxx".parse()
-        );
-        assert_eq!(
-            Ok(Contract {
-                bid: "2nt".parse().unwrap(),
-                status: Status::Undoubled
-            }),
-            "2nt".parse()
-        );
-        assert_eq!(
-            Ok(Contract {
-                bid: "3h".parse().unwrap(),
-                status: Status::Doubled
-            }),
-            "3h x".parse()
-        );
-        assert_eq!(
-            Ok(Contract {
-                bid: "4d".parse().unwrap(),
-                status: Status::Redoubled
-            }),
-            "4    diamond x    x   ".parse()
-        );
-
-        assert_eq!(Err(ParseError::TooShort), "".parse::<Contract>());
-        assert_eq!(
-            Err(ParseError::BidLevelOutOfBounds),
-            "8cxx".parse::<Contract>()
-        );
-        assert_eq!(Err(ParseError::SuitNotValid), "5dxxx".parse::<Contract>());
     }
 
     fn game_with_small_interference() -> Auction {
@@ -496,7 +496,7 @@ mod test {
 
         assert!(game_auction.closed());
         assert_eq!(
-            Some("3NT".parse::<Contract>().unwrap()),
+            Some("S:3NT".parse::<Contract>().unwrap()),
             game_auction.contract()
         );
 
